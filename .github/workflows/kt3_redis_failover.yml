@@ -1,0 +1,33 @@
+name: КТ3_1 — Пицур АП — кластер Redis и восстановление
+
+permissions:
+  contents: read
+
+on:
+  push:
+    paths:
+      - "KT3_Redis/**"
+      - ".github/workflows/kt3_redis_failover.yml"
+  workflow_dispatch:
+
+jobs:
+  failover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Установить Redis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y redis-server redis-tools xvfb xterm scrot imagemagick fonts-dejavu-core
+      - name: Python — воспроизвести сбой и снять терминал
+        run: bash KT3_Redis/capture_terminal.sh
+      - name: Кадр терминала до сбоя
+        run: bash KT3_Redis/publish_capture.sh KT3_Redis/screenshots/05_кластер_терминал.png
+      - name: Кадр терминала после сбоя
+        run: bash KT3_Redis/publish_capture.sh KT3_Redis/screenshots/07_сбой_терминал.png
+      - name: Кадр терминала после восстановления
+        run: bash KT3_Redis/publish_capture.sh KT3_Redis/screenshots/08_восстановление_терминал.png
