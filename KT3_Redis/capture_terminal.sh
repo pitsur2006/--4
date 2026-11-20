@@ -26,7 +26,9 @@ xterm -T 'KT3_1 Redis Cluster - GitHub Actions terminal' \
 
 for stage in before written failed recovered; do
   timeout 90 bash -c 'until test -f "$1/$2.ready"; do sleep 0.2; done' _ "$KT3_CAPTURE_DIR" "$stage"
-  scrot "KT3_Redis/screenshots/$(case "$stage" in before) echo 05_кластер_терминал;; written) echo 06_запись_терминал;; failed) echo 07_сбой_терминал;; recovered) echo 08_восстановление_терминал;; esac).png"
+  filename="$(case "$stage" in before) echo 05_кластер_терминал;; written) echo 06_запись_терминал;; failed) echo 07_сбой_терминал;; recovered) echo 08_восстановление_терминал;; esac).png"
+  scrot "$KT3_CAPTURE_DIR/$filename"
+  cp -f "$KT3_CAPTURE_DIR/$filename" "KT3_Redis/screenshots/$filename"
   touch "$KT3_CAPTURE_DIR/$stage.continue"
 done
 
