@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+stage=start
+report_error() {
+  status=$?
+  cluster_log="$(tail -c 1200 /tmp/kt3_console.log 2>/dev/null | tr '\n' '|' || true)"
+  display_log="$(tail -c 400 /tmp/kt3_xvfb.log 2>/dev/null | tr '\n' '|' || true)"
+  xterm_log="$(tail -c 400 /tmp/kt3_xterm.log 2>/dev/null | tr '\n' '|' || true)"
+  printf '::error title=KT3 terminal capture::status=%s stage=%s console=%s display=%s xterm=%s\n' "$status" "$stage" "$cluster_log" "$display_log" "$xterm_log"
+}
+trap report_error ERR
+
 export DISPLAY=:99
 export KT3_CAPTURE_DIR=/tmp/kt3_capture
 mkdir -p "$KT3_CAPTURE_DIR" KT3_Redis/screenshots
@@ -10,7 +20,8 @@ sleep 1
 xterm -T 'KT3_1 Redis Cluster - GitHub Actions terminal' \
   -geometry 150x45+20+20 -fa 'DejaVu Sans Mono' -fs 12 \
   -bg '#1e1e1e' -fg '#e8e8e8' -hold \
-  -e bash -lc 'echo "$ python3 KT3_Redis/failover.py"; python3 -u KT3_Redis/failover.py 2>&1 | tee /tmp/kt3_console.log; echo "${PIPESTATUS[0]}" > /tmp/kt3_exit' &
+  -e bash -lc 'echo "$ python3 KT3_Redis/failover.py"; python3 -u KT3_Redis/failover.py 2>&1 | tee /tmp/kt3_console.log; echo "${PIPESTATUS[0]}" > /tmp/kt3_exit' \
+  2>/tmp/kt3_xterm.log &
 
 for stage in before written failed recovered; do
   timeout 90 bash -c 'until test -f "$1/$2.ready"; do sleep 0.2; done' _ "$KT3_CAPTURE_DIR" "$stage"
