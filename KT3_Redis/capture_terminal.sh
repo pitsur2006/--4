@@ -3,13 +3,14 @@ set -euo pipefail
 
 stage=start
 report_error() {
-  status=$?
+  failed_command="$1"
+  status="$2"
   cluster_log="$(tail -c 1200 /tmp/kt3_console.log 2>/dev/null | tr '\n' '|' || true)"
   display_log="$(tail -c 400 /tmp/kt3_xvfb.log 2>/dev/null | tr '\n' '|' || true)"
   xterm_log="$(tail -c 400 /tmp/kt3_xterm.log 2>/dev/null | tr '\n' '|' || true)"
-  printf '::error title=KT3 terminal capture::status=%s stage=%s console=%s display=%s xterm=%s\n' "$status" "$stage" "$cluster_log" "$display_log" "$xterm_log"
+  printf '::error title=KT3 terminal capture::status=%s stage=%s command=%s exit_file=%s images=%s console=%s display=%s xterm=%s\n' "$status" "$stage" "$failed_command" "$(cat /tmp/kt3_exit 2>/dev/null || true)" "$(find KT3_Redis/screenshots -name '0[5-8]_*.png' | wc -l)" "$cluster_log" "$display_log" "$xterm_log"
 }
-trap report_error ERR
+trap 'report_error "$BASH_COMMAND" "$?"' ERR
 
 export DISPLAY=:99
 export KT3_CAPTURE_DIR=/tmp/kt3_capture
